@@ -11,52 +11,69 @@ The goals / steps of this project are the following:
 * Estimate a bounding box for vehicles detected.
 
 [//]: # (Image References)
-[image1]: ./examples/car_not_car.png
-[image2]: ./examples/HOG_example.jpg
-[image3]: ./examples/sliding_windows.jpg
-[image4]: ./examples/sliding_window.jpg
-[image5]: ./examples/bboxes_and_heat.png
-[image6]: ./examples/labels_map.png
-[image7]: ./examples/output_bboxes.png
-[video1]: ./project_video.mp4
+[image1]: ./output_images/car_not_car.png
+[image2]: ./output_images/HOG.png
+[image3]: ./output_images/sliding_windows.jpg
+[image4]: ./output_images/sliding_window.jpg
+[image5]: ./output_images/bboxes_and_heat.png
+[image6]: ./output_images/labels_map.png
+[image7]: ./output_images/output_bboxes.png
+[video1]: ./output_videos/project_video.mp4
+[video2]: ./output_videos/test_video.mp4
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/513/view) Points
 Here I will consider the rubric points individually and describe how I addressed each point in my implementation.  
 
+### Contents
+* vehicle_dection.ipynb: the main program
+* output_images: the folder containing the output images
+* output_videos: the folder containing the output videos
+* writeup_report.md: the report
+
 ### Histogram of Oriented Gradients (HOG)
 
-#### 1. Explain how (and identify where in your code) you extracted HOG features from the training images.
+#### 1. Extract HOG features from the training images.
 
-The code for this step is contained in the first code cell of the IPython notebook (or in lines # through # of the file called `some_file.py`).  
+The code for getting HOG features is contained in the first code cell of the IPython notebook, vehicle_detection.ipynb.
 
-I started by reading in all the `vehicle` and `non-vehicle` images.  Here is an example of one of each of the `vehicle` and `non-vehicle` classes:
-
-![alt text][image1]
+In the third code cell, I started by reading in all the `vehicle` and `non-vehicle` images. 
 
 I then explored different color spaces and different `skimage.hog()` parameters (`orientations`, `pixels_per_cell`, and `cells_per_block`).  I grabbed random images from each of the two classes and displayed them to get a feel for what the `skimage.hog()` output looks like.
 
-Here is an example using the `YCrCb` color space and HOG parameters of `orientations=8`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
+Here is an example using the `YCrCb` color space and HOG parameters of `orientations=9`, `pixels_per_cell=(8, 8)` and `cells_per_block=(2, 2)`:
 
+![Left side are the original images and the right side are the HOG featured images][image2]
 
-![alt text][image2]
+#### 2. Choosing HOG parameters.
 
-#### 2. Explain how you settled on your final choice of HOG parameters.
+I tried various combinations of parameters, especially for color spaces. I had problems to use LUV and YUV color spaces, which will lead to some "NAN error". In rest of color spaces, I found YCrCb is the most stable one. 
+Parameters | Value
+        ---|--- 
+color_space | YCrCb
+orient | 12 
+pix_per_cell | 8 
+cell_per_block | 2 
+hog_channel | ALL
 
-I tried various combinations of parameters and...
+#### 3. Train a linear SVM classifier using my selected HOG features and color features.
 
-#### 3. Describe how (and identify where in your code) you trained a classifier using your selected HOG features (and color features if you used them).
+I trained a linear SVM using a combination of HOG feature, binned color features and color histogram features. For binned color features, I took spatial_size = (32, 32). For the color histogram features, I took hist_bins = 32. 
 
-I trained a linear SVM using...
-
+I normalized the features and took a random split of the data with split_rate = 0.2  before training.
 ### Sliding Window Search
 
-#### 1. Describe how (and identify where in your code) you implemented a sliding window search.  How did you decide what scales to search and how much to overlap windows?
+#### 1. Choosing scales and other related parameters for sliding window search. 
 
-I decided to search random window positions at random scales all over the image and came up with this (ok just kidding I didn't actually ;):
+Firstly I tried four scales 0.75, 1, 1.5, 2 on all test images, and I found out scale =1 and scale =1.5 are two most effective scales. Then I played around with the starting and end points in y direction. Finally I used the parameters in the following table.
+
+Scale | start point on y | end point on y
+---| --- | ---
+1 | 372 | 500
+1.5 | 372 | 660
 
 ![alt text][image3]
 
-#### 2. Show some examples of test images to demonstrate how your pipeline is working.  What did you do to optimize the performance of your classifier?
+#### 2. Examples of the performance of the classifier on test images
 
 Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
@@ -65,7 +82,8 @@ Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spat
 ### Video Implementation
 
 #### 1. Final video output. 
-
+![Link to the test video][video2]
+![Link to the project video][video1]
 
 #### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
 
@@ -83,12 +101,13 @@ Here's an example result showing the heatmap from a series of frames of video, t
 **Here the resulting bounding boxes are drawn onto the last frame in the series:**
 ![alt text][image7]
 
-
-
-
 ### Discussion
 
 #### 1. Problems encountered and approaches to resolve them
+* overfitting when using block_norm = "L2-Hys" => I found L1 norm works better
+* Hard to detect the cars far away appeared in smaller size => using multiscale search winodws rather than only using one scale
 
 #### 2. Outlook
+* Try other meachine learning classifiers
+* Try to use deep neural networks as classifiers
 
