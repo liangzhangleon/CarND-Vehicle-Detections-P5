@@ -3,9 +3,8 @@
 
 The goals / steps of this project are the following:
 
-* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
+* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier, for example Linear SVM classifier
 * Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
-* Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
 * Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
 * Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
 * Estimate a bounding box for vehicles detected.
@@ -14,10 +13,12 @@ The goals / steps of this project are the following:
 [image1]: ./output_images/car_not_car.png
 [image2]: ./output_images/HOG.png
 [image3]: ./output_images/sliding_windows.jpg
-[image4]: ./output_images/sliding_window.jpg
-[image5]: ./output_images/bboxes_and_heat.png
-[image6]: ./output_images/labels_map.png
-[image7]: ./output_images/output_bboxes.png
+[image4_1]: ./output_images/test1_raw.png
+[image4_2]: ./output_images/test2_raw.png
+[image4_3]: ./output_images/test3_raw.png
+[image5]: ./output_images/test4.png
+[image6]: ./output_images/test5.png
+[image7]: ./output_images/test6.png
 [video1]: ./output_videos/project_video.mp4
 [video2]: ./output_videos/test_video.mp4
 
@@ -47,6 +48,7 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 #### 2. Choosing HOG parameters.
 
 I tried various combinations of parameters, especially for color spaces. I had problems to use LUV and YUV color spaces, which will lead to some "NAN error". In rest of color spaces, I found YCrCb is the most stable one. 
+
 Parameters | Value
 -----------|------ 
 color_space | YCrCb
@@ -64,55 +66,60 @@ I normalized the features and took a random split of the data with split_rate = 
 
 #### 1. Choosing scales and other related parameters for sliding window search. 
 
-Firstly I tried four scales 0.75, 1, 1.5, 2 on all test images, and I found out scale =1 and scale =1.5 are two most effective scales. Then I played around with the starting and end points in y direction. Finally I used the parameters in the following table.
+Firstly I tried various scales from 0.5 to 2.5 on all test images, and I also played around with the starting and end points in y direction. Finally I used the parameters in the following table.
 
 Scale | start point on y | end point on y
 ------| ---------------- | --------------
-1 | 372 | 500
-1.5 | 372 | 660
-
-![alt text][image3]
+0.8 | 400 | 460
+1.0 | 400 | 528
+1.5 | 400 | 660
+2   | 450 | 680
 
 #### 2. Examples of the performance of the classifier on test images
 
-Ultimately I searched on two scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
+Ultimately I searched on four scales using YCrCb 3-channel HOG features plus spatially binned color and histograms of color in the feature vector, which provided a nice result.  Here are some example images:
 
-![alt text][image4]
+![test1.jpg][image4_1]
+
+![test2.jpg][image4_2]
+
+![test3.jpg][image4_3]
 
 ### Video Implementation
 
 #### 1. Final video output. 
+
 ![Link to the test video][video2]
+
 ![Link to the project video][video1]
 
-#### 2. Describe how (and identify where in your code) you implemented some kind of filter for false positives and some method for combining overlapping bounding boxes.
+#### 2.  Filters for false positives and using heatmap for combining overlapping bounding boxes.
+After I use multiscale sliding search windows to dectect boxes, I used a line function acting as track boundary to filter out all the false positives on the opposite track. 
 
-I recorded the positions of positive detections in each frame of the video.  From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
+From the positive detections I created a heatmap and then thresholded that map to identify vehicle positions.  I then used `scipy.ndimage.measurements.label()` to identify individual blobs in the heatmap.  I then assumed each blob corresponded to a vehicle.  I constructed bounding boxes to cover the area of each blob detected.  
 
-Here's an example result showing the heatmap from a series of frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
+Here's an example result showing the heatmap from three frames of video, the result of `scipy.ndimage.measurements.label()` and the bounding boxes then overlaid on the last frame of video:
 
-**Here are six frames and their corresponding heatmaps:**
+**Here are results for three frames: original image, heatmap and with bounding boxes**
 
-![alt text][image5]
-
-**Here is the output of `scipy.ndimage.measurements.label()` on the integrated heatmap from all six frames:**
-![alt text][image6]
-
-**Here the resulting bounding boxes are drawn onto the last frame in the series:**
-![alt text][image7]
+![Frame 1][image5]
+![Frame 2][image6]
+![Frame 3][image7]
 
 ### Discussion
 
 #### 1. Problems encountered and approaches to resolve them
 * Problem1
-overfitting when using block_norm = "L2-Hys" => I found L1 norm works better
+overfitting when using block_norm = "L2-Hys" 
+=> I found L1 norm works better
 * Problem2
-Hard to detect the cars far away appeared in smaller sizes => using multiscale search winodws rather than only using one scale
+Hard to detect the cars far away appeared in smaller sizes 
+=> using multiscale search winodws rather than only using one scale
 * Problem3
-"False" positive of cars driving on the opposite lanes. The good thing is that the classifier can detect cars also in the opposite direction, but the bad thing is that the classifier can not tell if the cars are driving in the opposite direction. The problem with using a threshold in heatmap is that it is hard to find a robust threshold. I tried various multiscale search setup with no luck. =>
-Since the classifer was only trained with two labels, cars and not cars, I think the linear SVM classifier itself works perfectly as expected. Hence, I manually wrote a line function to simulate the lane boundary, which in the realistic case should be extracted from sensor data. With this line function, I can tell if the detected boxes are on the opposite lanes.
+"False" positive of cars driving on the opposite lanes. The good thing is that the classifier can detect cars also in the opposite direction, but the bad thing is that the classifier can not tell if the cars are driving in the opposite direction. The problem with using a threshold in heatmap is that it is hard to find a robust threshold. I tried various multiscale search setup with no luck.
+=> Since the classifer was only trained with two labels, cars and not cars, I think the linear SVM classifier itself works perfectly as expected. Hence, I manually wrote a line function to simulate the lane boundary, which in the realistic case should be extracted from sensor data. With this line function, I can tell if the detected boxes are on the opposite lanes.
 
 #### 2. Outlook
-* A way to smoothly tracking the car positions. Now the sliding windows search method I use works in each individual frame, 
+* A way to smoothly tracking the car positions. Now the sliding windows search method I use works for each individual frame, this leads to a bit oscillation of positions of tracked cars. It would be nicer to use the position information over a serie of old frames to smooth the car position for the next frame.
 * Try other meachine learning classifiers, for example non-linear support vector machines,  decision trees, even deep neural networks, etc.
 
