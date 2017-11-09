@@ -48,7 +48,7 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 I tried various combinations of parameters, especially for color spaces. I had problems to use LUV and YUV color spaces, which will lead to some "NAN error". In rest of color spaces, I found YCrCb is the most stable one. 
 Parameters | Value
-        ---|--- 
+-----------|------ 
 color_space | YCrCb
 orient | 12 
 pix_per_cell | 8 
@@ -67,7 +67,7 @@ I normalized the features and took a random split of the data with split_rate = 
 Firstly I tried four scales 0.75, 1, 1.5, 2 on all test images, and I found out scale =1 and scale =1.5 are two most effective scales. Then I played around with the starting and end points in y direction. Finally I used the parameters in the following table.
 
 Scale | start point on y | end point on y
----| --- | ---
+------| ---------------- | --------------
 1 | 372 | 500
 1.5 | 372 | 660
 
@@ -104,10 +104,15 @@ Here's an example result showing the heatmap from a series of frames of video, t
 ### Discussion
 
 #### 1. Problems encountered and approaches to resolve them
-* overfitting when using block_norm = "L2-Hys" => I found L1 norm works better
-* Hard to detect the cars far away appeared in smaller size => using multiscale search winodws rather than only using one scale
+* Problem1
+overfitting when using block_norm = "L2-Hys" => I found L1 norm works better
+* Problem2
+Hard to detect the cars far away appeared in smaller sizes => using multiscale search winodws rather than only using one scale
+* Problem3
+"False" positive of cars driving on the opposite lanes. The good thing is that the classifier can detect cars also in the opposite direction, but the bad thing is that the classifier can not tell if the cars are driving in the opposite direction. The problem with using a threshold in heatmap is that it is hard to find a robust threshold. I tried various multiscale search setup with no luck. =>
+Since the classifer was only trained with two labels, cars and not cars, I think the linear SVM classifier itself works perfectly as expected. Hence, I manually wrote a line function to simulate the lane boundary, which in the realistic case should be extracted from sensor data. With this line function, I can tell if the detected boxes are on the opposite lanes.
 
 #### 2. Outlook
-* Try other meachine learning classifiers
-* Try to use deep neural networks as classifiers
+* A way to smoothly tracking the car positions. Now the sliding windows search method I use works in each individual frame, 
+* Try other meachine learning classifiers, for example non-linear support vector machines,  decision trees, even deep neural networks, etc.
 
