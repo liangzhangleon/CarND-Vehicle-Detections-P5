@@ -47,7 +47,7 @@ Here is an example using the `YCrCb` color space and HOG parameters of `orientat
 
 #### 2. Choosing HOG parameters.
 
-I tried various combinations of parameters, especially for color spaces. I had problems to use LUV and YUV color spaces, which will lead to some "NAN error". In rest of color spaces, I found YCrCb is the most stable one. 
+I tried various combinations of parameters, especially for color spaces. I had problems to use LUV and YUV color spaces, which will lead to some "NAN error". In rest of color spaces, I found YCrCb is the most stable one, and I settled on the following parameters.
 
 Parameters | Value
 -----------|------ 
@@ -70,10 +70,10 @@ Firstly I tried various scales from 0.5 to 2.5 on all test images, and I also pl
 
 Scale | start point on y | end point on y
 ------| ---------------- | --------------
-0.8 | 400 | 460
+0.8 | 400 | 500
 1.0 | 400 | 528
-1.5 | 400 | 660
-2   | 450 | 680
+1.5 | 400 | 650
+2   | 450 | 660
 
 #### 2. Examples of the performance of the classifier on test images
 
@@ -106,6 +106,8 @@ Here's an example result showing the heatmap from three frames of video, the res
 ![Frame 2][image6]
 ![Frame 3][image7]
 
+Note that I used the hotboxes from prevous three frames to enrich the positive detected boxes, which is mainly used for smoothing the tracking boxes and also removing some false positive boxes. See code line 34-39, 55-57 in the pipeline() functions.
+
 ### Discussion
 
 #### 1. Problems encountered and approaches to resolve them
@@ -120,6 +122,6 @@ Hard to detect the cars far away appeared in smaller sizes
 => Since the classifer was only trained with two labels, cars and not cars, I think the linear SVM classifier itself works perfectly as expected. Hence, I manually wrote a line function to simulate the lane boundary, which in the realistic case should be extracted from sensor data. With this line function, I can tell if the detected boxes are on the opposite lanes.
 
 #### 2. Outlook
-* A way to smoothly tracking the car positions. Now the sliding windows search method I use works for each individual frame, this leads to a bit oscillation of positions of tracked cars. It would be nicer to use the position information over a serie of old frames to smooth the car position for the next frame.
+* A better way to smoothly tracking the car positions. There is still a bit oscillation of positions of tracked cars. It would be nicer to use more position information over a serie of old frames to smooth the car position for the next frame.
 * Try other meachine learning classifiers, for example non-linear support vector machines,  decision trees, even deep neural networks, etc.
 
