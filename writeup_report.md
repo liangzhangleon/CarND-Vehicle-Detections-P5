@@ -120,6 +120,9 @@ Hard to detect the cars far away appeared in smaller sizes
 * Problem3
 "False" positive of cars driving on the opposite lanes. The good thing is that the classifier can detect cars also in the opposite direction, but the bad thing is that the classifier can not tell if the cars are driving in the opposite direction. The problem with using a threshold in heatmap is that it is hard to find a robust threshold. I tried various multiscale search setup with no luck.
 => Since the classifer was only trained with two labels, cars and not cars, I think the linear SVM classifier itself works perfectly as expected. Hence, I manually wrote a line function to simulate the lane boundary, which in the realistic case should be extracted from sensor data. With this line function, I can tell if the detected boxes are on the opposite lanes.
+* Problem4
+position oscillation of tracked cars
+=> I used labeled hotboxes derived from heatmap from previous three frames to enrich the positive detected boxes. It leads to more stable tracking and aslo removed some false positive boxes 
 
 #### 2. Outlook
 * A better way to smoothly tracking the car positions. There is still a bit oscillation of positions of tracked cars. It would be nicer to use more position information over a serie of old frames to smooth the car position for the next frame.
